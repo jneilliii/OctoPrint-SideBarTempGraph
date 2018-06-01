@@ -11,61 +11,11 @@ $(function() {
                 key: ko.observable(),
                 actual: ko.observable(0),
                 target: ko.observable(0),
-                offset: ko.observable(0),
-                newTarget: ko.observable(),
-                newOffset: ko.observable()
+				offset: ko.observable(0)
             };
-
-            entry.newTargetValid = ko.pureComputed(function() {
-                var value = entry.newTarget();
-
-                try {
-                    value = parseInt(value);
-                } catch (exc) {
-                    return false;
-                }
-
-                return (value >= 0 && value <= 999);
-            });
-
-            entry.newOffsetValid = ko.pureComputed(function() {
-                var value = entry.newOffset();
-
-                try {
-                    value = parseInt(value);
-                } catch (exc) {
-                    return false;
-                }
-
-                return (-50 <= value <= 50);
-            });
-
-            entry.offset.subscribe(function(newValue) {
-                if (self.changingOffset.item !== undefined && self.changingOffset.item.key() === entry.key()) {
-                    // if our we currently have the offset dialog open for this entry and the offset changed
-                    // meanwhile, update the displayed value in the dialog
-                    self.changingOffset.offset(newValue);
-                }
-            });
 
             return entry;
         };
-
-        self.changingOffset = {
-            offset: ko.observable(0),
-            newOffset: ko.observable(0),
-            name: ko.observable(""),
-            item: undefined,
-
-            title: ko.pureComputed(function() {
-                return _.sprintf(gettext("Changing Offset of %(name)s"), {name: self.changingOffset.name()});
-            }),
-            description: ko.pureComputed(function() {
-                return _.sprintf(gettext("Use the form below to specify a new offset to apply to all temperature commands sent from printed files for \"%(name)s\""),
-                    {name: self.changingOffset.name()});
-            })
-        };
-        self.changeOffsetDialog = undefined;
 
         self.tools = ko.observableArray([]);
 
@@ -404,12 +354,12 @@ $(function() {
                 var targetTemp = targets && targets.length ? formatTemperature(targets[targets.length - 1][1], showFahrenheit) : "-";
 
                 data.push({
-                    label: gettext("Actual") + " " + heaterOptions[type].name + ": " + actualTemp,
+                    label: heaterOptions[type].name + ": " + actualTemp,
                     color: heaterOptions[type].color,
                     data: actuals.length ? actuals : [[now, undefined]]
                 });
                 data.push({
-                    label: gettext("Target") + " " + heaterOptions[type].name + ": " + targetTemp,
+                    label: heaterOptions[type].name + ": " + targetTemp,
                     color: pusher.color(heaterOptions[type].color).tint(0.5).html(),
                     data: targets.length ? targets : [[now, undefined]]
                 });
@@ -491,215 +441,6 @@ $(function() {
             return maxTemp;
         };
 
-        self.incrementTarget = function(item) {
-            var value = item.newTarget();
-            if (value === undefined || (typeof(value) === "string" && value.trim() === "")) {
-                value = item.target();
-            }
-            try {
-                value = parseInt(value);
-                if (value > 999) return;
-                item.newTarget(value + 1);
-                self.autosendTarget(item);
-            } catch (ex) {
-                // do nothing
-            }
-        };
-
-        self.decrementTarget = function(item) {
-            var value = item.newTarget();
-            if (value === undefined || (typeof(value) === "string" && value.trim() === "")) {
-                value = item.target();
-            }
-            try {
-                value = parseInt(value);
-                if (value <= 0) return;
-                item.newTarget(value - 1);
-                self.autosendTarget(item);
-            } catch (ex) {
-                // do nothing
-            }
-        };
-
-        var _sendTimeout = {};
-
-        self.autosendTarget = function(item) {
-            if (!self.settingsViewModel.temperature_sendAutomatically()) return;
-            var delay = self.settingsViewModel.temperature_sendAutomaticallyAfter() * 1000;
-
-            var name = item.name();
-            if (_sendTimeout[name]) {
-                window.clearTimeout(_sendTimeout[name]);
-            }
-            _sendTimeout[name] = window.setTimeout(function() {
-                self.setTarget(item);
-                delete _sendTimeout[name];
-            }, delay);
-        };
-
-        self.clearAutosendTarget = function(item) {
-            var name = item.name();
-            if (_sendTimeout[name]) {
-                window.clearTimeout(_sendTimeout[name]);
-                delete _sendTimeout[name];
-            }
-        };
-
-        self.setTarget = function(item, form) {
-            var value = item.newTarget();
-            if (form !== undefined) {
-                $(form).find("input").blur();
-            }
-            if (value === undefined || (typeof(value) === "string" && value.trim() === "")) return OctoPrintClient.createRejectedDeferred();
-
-            self.clearAutosendTarget(item);
-            return self.setTargetToValue(item, value);
-        };
-
-        self.setTargetFromProfile = function(item, profile) {
-            if (!profile) return OctoPrintClient.createRejectedDeferred();
-
-            self.clearAutosendTarget(item);
-            return self.setTargetToValue(item, (item.key() === "bed" ? profile.bed : profile.extruder));
-        };
-
-        self.setTargetToZero = function(item) {
-            self.clearAutosendTarget(item);
-            return self.setTargetToValue(item, 0);
-        };
-
-        self.setTargetToValue = function(item, value) {
-            self.clearAutosendTarget(item);
-
-            try {
-                value = parseInt(value);
-            } catch (ex) {
-                return OctoPrintClient.createRejectedDeferred();
-            }
-
-            if (value < 0 || value > 999) return OctoPrintClient.createRejectedDeferred();
-
-            var onSuccess = function() {
-                item.target(value);
-                item.newTarget("");
-            };
-
-            if (item.key() === "bed") {
-                return self._setBedTemperature(value)
-                    .done(onSuccess);
-            } else {
-                return self._setToolTemperature(item.key(), value)
-                    .done(onSuccess);
-            }
-        };
-
-        self.changeOffset = function(item) {
-            // copy values
-            self.changingOffset.item = item;
-            self.changingOffset.name(item.name());
-            self.changingOffset.offset(item.offset());
-            self.changingOffset.newOffset(item.offset());
-
-            self.changeOffsetDialog.modal("show");
-        };
-
-        self.incrementChangeOffset = function() {
-            var value = self.changingOffset.newOffset();
-            if (value === undefined || (typeof(value) === "string" && value.trim() === "")) value = self.changingOffset.offset();
-            try {
-                value = parseInt(value);
-                if (value >= 50) return;
-                self.changingOffset.newOffset(value + 1);
-            } catch (ex) {
-                // do nothing
-            }
-        };
-
-        self.decrementChangeOffset = function() {
-            var value = self.changingOffset.newOffset();
-            if (value === undefined || (typeof(value) === "string" && value.trim() === "")) value = self.changingOffset.offset();
-            try {
-                value = parseInt(value);
-                if (value <= -50) return;
-                self.changingOffset.newOffset(value - 1);
-            } catch (ex) {
-                // do nothing
-            }
-        };
-
-        self.deleteChangeOffset = function() {
-            self.changingOffset.newOffset(0);
-        };
-
-        self.confirmChangeOffset = function() {
-            var item = self.changingOffset.item;
-            item.newOffset(self.changingOffset.newOffset());
-
-            self.setOffset(item)
-                .done(function() {
-                    self.changeOffsetDialog.modal("hide");
-
-                    // reset
-                    self.changingOffset.offset(0);
-                    self.changingOffset.newOffset(0);
-                    self.changingOffset.name("");
-                    self.changingOffset.item = undefined;
-                })
-        };
-
-        self.setOffset = function(item) {
-            var value = item.newOffset();
-            if (value === undefined || (typeof(value) === "string" && value.trim() === "")) return OctoPrintClient.createRejectedDeferred();
-            return self.setOffsetToValue(item, value);
-        };
-
-        self.setOffsetToZero = function(item) {
-            return self.setOffsetToValue(item, 0);
-        };
-
-        self.setOffsetToValue = function(item, value) {
-            try {
-                value = parseInt(value);
-            } catch (ex) {
-                return OctoPrintClient.createRejectedDeferred();
-            }
-
-            if (value < -50 || value > 50) return OctoPrintClient.createRejectedDeferred();
-
-            var onSuccess = function() {
-                item.offset(value);
-                item.newOffset("");
-            };
-
-            if (item.key() === "bed") {
-                return self._setBedOffset(value)
-                    .done(onSuccess);
-            } else {
-                return self._setToolOffset(item.key(), value)
-                    .done(onSuccess);
-            }
-        };
-
-        self._setToolTemperature = function(tool, temperature) {
-            var data = {};
-            data[tool] = parseInt(temperature);
-            return OctoPrint.printer.setToolTargetTemperatures(data);
-        };
-
-        self._setToolOffset = function(tool, offset) {
-            var data = {};
-            data[tool] = parseInt(offset);
-            return OctoPrint.printer.setToolTemperatureOffsets(data);
-        };
-
-        self._setBedTemperature = function(temperature) {
-            return OctoPrint.printer.setBedTargetTemperature(parseInt(temperature));
-        };
-
-        self._setBedOffset = function(offset) {
-            return OctoPrint.printer.setBedTemperatureOffset(parseInt(offset));
-        };
-
         self._replaceLegendLabel = function(index, series, value, emph) {
             var showFahrenheit = self._shallShowFahrenheit();
 
@@ -714,19 +455,6 @@ $(function() {
             return (self.settingsViewModel.settings !== undefined )
                    ? self.settingsViewModel.settings.appearance.showFahrenheitAlso()
                    : false;
-        };
-
-        self.handleEnter = function(event, type, item) {
-            if (event.keyCode === 13) {
-                if (type === "target") {
-                    self.setTarget(item)
-                        .done(function() {
-                            event.target.blur();
-                        });
-                } else if (type === "offset") {
-                    self.confirmChangeOffset();
-                }
-            }
         };
 
         self.handleFocus = function(event, type, item) {

@@ -1,5 +1,9 @@
 #sidebartempgraph {
-    height: 350px;
+    height: 250px;
     width: 100%;
-    background: url(../img/graph-background.png) center no-repeat;
+}
+
+#sidebar_plugin_sidebartempgraph > div.accordion-inner {
+	padding-left: 5px;
+	padding-right: 0px;
 }
