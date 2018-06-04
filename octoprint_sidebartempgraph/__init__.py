@@ -21,7 +21,7 @@ class SideBarTempGraph(octoprint.plugin.SettingsPlugin,
 
     def get_update_information(self):
         return dict(
-            tempsgraph=dict(
+            sidebartempgraph=dict(
                 displayName="Sidebar Temp Graph",
                 displayVersion=self._plugin_version,
 
