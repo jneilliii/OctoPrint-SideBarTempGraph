@@ -2,7 +2,7 @@
 
 Small plugin that adds a temperature graph to the sidebar.  
 
-**Note:** To change the location of the graph within the Sidebar install [OctoPrint-SidebarOrder](https://github.com/zoombahh/OctoPrint-SidebarOrder) plugin.
+**Note:** To change the location of the graph within the Sidebar install [OctoPrint-SidebarOrder](https://github.com/zoombahh/OctoPrint-SidebarOrder) plugin. Use `plugin_sidebartempgraph` for the sidebar identifier in that plugin's settings.
 
 ### Screenshot
 
