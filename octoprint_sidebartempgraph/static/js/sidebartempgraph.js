@@ -474,7 +474,7 @@ $(function() {
         };
 
         self.onStartup = function() {
-			$('#sidebar_plugin_sidebartempgraph_wrapper > div.accordion-heading > a').prepend('<i class="icon icon-fire"/>');
+			$('#sidebar_plugin_sidebartempgraph_wrapper > div.accordion-heading > a').prepend('<i class="fa icon-black fa-thermometer-full"/>');
             var graph = $("#sidebartempgraph");
             if (graph.length && !OctoPrint.coreui.browser.mobile) {
                 graph.bind("plothover",  function (event, pos, item) {
