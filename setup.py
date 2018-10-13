@@ -14,7 +14,7 @@ plugin_package = "octoprint_sidebartempgraph"
 plugin_name = "OctoPrint-SibeBarTempGraph"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.1.1"
+plugin_version = "0.1.2"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
@@ -67,7 +67,8 @@ try:
 	import octoprint_setuptools
 except:
 	print("Could not import OctoPrint's setuptools, are you sure you are running that under "
-	      "the same python installation that OctoPrint is installed under?")
+	      "the same python installation that OctoPrint is installed under?"
+	      "(Maybe try \"/home/pi/oprint/bin/pip\" instead?)")
 	import sys
 	sys.exit(-1)
 
