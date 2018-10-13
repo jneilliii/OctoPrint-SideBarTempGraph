@@ -313,7 +313,7 @@ $(function() {
                     }
                 },
                 legend: {
-                    position: "sw",
+                    position: "nw",
                     noColumns: 2,
                     backgroundOpacity: 0
                 }
