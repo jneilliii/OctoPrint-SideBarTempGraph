@@ -20,11 +20,15 @@ $(function() {
         self.tools = ko.observableArray([]);
 
         self.hasBed = ko.observable(true);
+        self.hasChamber = ko.observable(false);
 
         self.bedTemp = self._createToolEntry();
         self.bedTemp["name"](gettext("Bed"));
         self.bedTemp["key"]("bed");
 
+        self.chamberTemp = self._createToolEntry();
+        self.chamberTemp["name"](gettext("Chamber"));
+        self.chamberTemp["key"]("chamber");
         self.isErrorOrClosed = ko.observable(undefined);
         self.isOperational = ko.observable(undefined);
         self.isPrinting = ko.observable(undefined);
@@ -85,6 +89,13 @@ $(function() {
                 self.hasBed(false);
             }
 
+            // heated chamber
+            if (currentProfileData && currentProfileData.heatedChamber()) {
+                self.hasChamber(true);
+                heaterOptions["chamber"] = {name: gettext("Chamber"), color: "black"};
+            } else {
+                self.hasChamber(false);
+            }
             // write back
             self.heaterOptions(heaterOptions);
             self.tools(tools);
@@ -99,6 +110,7 @@ $(function() {
             self.settingsViewModel.printerProfiles.currentProfileData().extruder.count.subscribe(self._printerProfileUpdated);
             self.settingsViewModel.printerProfiles.currentProfileData().extruder.sharedNozzle.subscribe(self._printerProfileUpdated);
             self.settingsViewModel.printerProfiles.currentProfileData().heatedBed.subscribe(self._printerProfileUpdated);
+            self.settingsViewModel.printerProfiles.currentProfileData().heatedChamber.subscribe(self._printerProfileUpdated);
         });
 
         self.temperatures = [];
@@ -174,6 +186,13 @@ $(function() {
                 self.bedTemp["target"](0);
             }
 
+            if (lastData.hasOwnProperty("chamber")) {
+                self.chamberTemp["actual"](lastData.chamber.actual);
+                self.chamberTemp["target"](lastData.chamber.target);
+            } else {
+                self.chamberTemp["actual"](0);
+                self.chamberTemp["target"](0);
+            }
             if (!CONFIG_TEMPERATURE_GRAPH) return;
 
             self.temperatures = self._processTemperatureData(serverTime, data, self.temperatures);
@@ -199,6 +218,12 @@ $(function() {
                 self.bedTemp["offset"](data["bed"]);
             } else {
                 self.bedTemp["offset"](0);
+            }
+
+            if (data.hasOwnProperty("chamber")) {
+                self.chamberTemp["offset"](data["chamber"]);
+            } else {
+                self.chamberTemp["offset"](0);
             }
         };
 
