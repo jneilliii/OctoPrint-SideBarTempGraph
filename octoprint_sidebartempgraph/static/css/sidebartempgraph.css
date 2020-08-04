@@ -1,5 +1,6 @@
 #sidebartempgraph {
     height: 250px;
+    min-width: 280px;
     width: 100%;
 }
 

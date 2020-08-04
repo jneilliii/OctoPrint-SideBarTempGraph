@@ -498,7 +498,7 @@ $(function() {
             }
         };
 
-        self.onStartup = function() {
+        self.onStartupComplete = function() {
 			$('#sidebar_plugin_sidebartempgraph_wrapper > div.accordion-heading > a').prepend('<i class="fa icon-black fa-thermometer-full"/>');
             var graph = $("#sidebartempgraph");
             if (graph.length && !OctoPrint.coreui.browser.mobile) {
@@ -516,11 +516,12 @@ $(function() {
             } else {
                 self.updatePlot();
             }
-        };
-
-        self.onStartupComplete = function() {
             self._printerProfileUpdated();
         };
+
+/*        self.onStartupComplete = function() {
+            self._printerProfileUpdated();
+        };*/
 
     }
 
